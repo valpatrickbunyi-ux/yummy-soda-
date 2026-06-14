@@ -1,0 +1,89 @@
+# =============================================================================
+# Yummy Soda - Apache Access Control & Rewrite Rules
+# =============================================================================
+# Place this file in the root of your yummy-soda/ folder.
+# Requires: mod_rewrite enabled, AllowOverride All in Apache config.
+# =============================================================================
+
+# ── Enable Rewrite Engine ────────────────────────────────────────────────────
+RewriteEngine On
+
+# ── Block access to ALL hidden files (starting with .) ───────────────────────
+# This includes .env, .gitignore, .htaccess itself, .DS_Store, etc.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ── Block access to sensitive file extensions ────────────────────────────────
+<FilesMatch "\.(env|gitignore|md|sql|log|bak|config|ini|yml|yaml|json|dist)$">
+    Require all denied
+</FilesMatch>
+
+# ── Block access to specific sensitive files by name ─────────────────────────
+<Files "README.md">
+    Require all denied
+</Files>
+<Files "ARCHITECTURE.md">
+    Require all denied
+</Files>
+<Files "INSTALLATION.md">
+    Require all denied
+</Files>
+<Files "USER_MANUAL.md">
+    Require all denied
+</Files>
+<Files ".env.example">
+    Require all denied
+</Files>
+
+# ── Block access to SQL dumps and database files ───────────────────────────────
+<FilesMatch "\.(sql|sqlite|sqlite3|db|db3)$">
+    Require all denied
+</FilesMatch>
+
+# ── Block access to backup/temp files ────────────────────────────────────────
+<FilesMatch "~$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(old|orig|backup|save|swp|tmp)$">
+    Require all denied
+</FilesMatch>
+
+# ── Disable directory listing ────────────────────────────────────────────────
+Options -Indexes
+
+# ── Prevent access to includes/ folder directly ──────────────────────────────
+RewriteRule ^includes/ - [F,L]
+
+# ── Prevent access to sql/ folder directly ───────────────────────────────────
+RewriteRule ^sql/ - [F,L]
+
+# ── Prevent access to docs/ folder directly (optional, remove if you serve docs)
+RewriteRule ^docs/ - [F,L]
+
+# ── Optional: Pretty URLs (uncomment if needed) ──────────────────────────────
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.*)$ index.php [QSA,L]
+
+# ── Security Headers (requires mod_headers) ──────────────────────────────────
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Enable XSS protection in browsers
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Referrer policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ── PHP Settings (if PHP runs as Apache module) ──────────────────────────────
+<IfModule mod_php.c>
+    php_flag display_errors off
+    php_value upload_max_filesize 5M
+    php_value post_max_size 5M
+</IfModule>
